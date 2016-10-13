@@ -62,7 +62,7 @@ Please select the genomic region
 <form action="/get_variants" method="post">
   username:   <input type="text" name="username" value="root"><br>
   password:   <input type="password" name="password"><br>
-  chromosome: <input type="text" name="chromosome" value="7"><br>
+  chromosome_id: <input type="text" name="chromosome_id" value="7"><br>
   start:      <input type="text" name="start"      value="123456"><br>
   end:        <input type="text" name="end"        value="234567"><br>
   limit:      <input type="text" name="limit"      value="1000000"><br>
@@ -76,8 +76,8 @@ Please select the genomic region
         self.set_header("Content-Type", "text/plain")
         username = self.get_body_argument("username")
         password = self.get_body_argument("password")
-        chromosome = self.get_body_argument("chromosome")
-        chromosome = str(int(chromosome) - 1)
+        chromosome_id_ = self.get_body_argument("chromosome_id")
+        # chromosome = str(int(chromosome) - 1)
         start = self.get_body_argument("start")
         end = self.get_body_argument("end")
         limit = 100000
@@ -85,8 +85,8 @@ Please select the genomic region
             limit = self.get_body_argument("limit")
         except tornado.web.MissingArgumentError:
             limit = 100000 
-        query = "between(GEUV_VARIANT,"+chromosome+",null,"+start+",null,"+chromosome+","+end+",null,null)"
-        query = "apply("+query+", chromosome, chromosome_id+1, start_position, start)"
+        query = "between(GEUV_VARIANT,"+chromosome_id_+",null,"+start+",null,"+chromosome_id_+","+end+",null,null)"
+        query = "apply("+query+", chromosome, chromosome_id, start_position, start)"
         query = "project("+query+", chromosome, start_position, reference, alternate, id, info)"
         if int(limit)>0:
             query = "limit("+query+","+limit+")"

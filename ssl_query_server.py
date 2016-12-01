@@ -48,9 +48,11 @@ class MainHandler(tornado.web.RequestHandler):
  
     def post(self):
         self.set_header("Content-Type", "text/plain")
-        username = self.get_body_argument("username")
-        password = self.get_body_argument("password")
-        query = self.get_body_argument("iquerytxt")
+        data = tornado.escape.json_decode(self.request.body)
+        print(data)
+        username = data["username"]
+        password =  data["password"]
+        query = data["iquerytxt"]
         print(query)
         myoutput = secure_iquery(username, password, query)
         self.write(''.join(myoutput))
@@ -76,15 +78,17 @@ Please select the genomic region
 
     def post(self):
         self.set_header("Content-Type", "text/plain")
-        username = self.get_body_argument("username")
-        password = self.get_body_argument("password")
-        chromosome_id_ = self.get_body_argument("chromosome_id")
+        data = tornado.escape.json_decode(self.request.body)
+        print(data)
+        username = data["username"]
+        password =  data["password"]
+        chromosome_id_ = data["chromosome_id"]
         # chromosome = str(int(chromosome) - 1)
-        start = self.get_body_argument("start")
-        end = self.get_body_argument("end")
+        start = data["start"]
+        end = data["end"]
         limit = 100000
         try:
-            limit = self.get_body_argument("limit")
+            limit = data["limit"]
         except tornado.web.MissingArgumentError:
             limit = 100000 
         query = "between(GEUV_VARIANT,"+chromosome_id_+",null,"+start+",null,"+chromosome_id_+","+end+",null,null)"
@@ -112,8 +116,10 @@ Please select the genomic region
 
     def post(self):
         self.set_header("Content-Type", "text/plain")
-        username = self.get_body_argument("username")
-        password = self.get_body_argument("password")
+        data = tornado.escape.json_decode(self.request.body)
+        print(data)
+        username = data["username"]
+        password =  data["password"]
         myoutput = secure_iquery(username, password, "project(list(), uaid, name)")
         self.write(''.join(myoutput))
 

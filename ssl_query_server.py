@@ -99,6 +99,25 @@ Please select the genomic region
         myoutput = secure_iquery(username, password, query)
         self.write(''.join(myoutput))
 
+class GetGenotypeBySnpIdHandler(tornado.web.RequestHandler):
+
+    def post(self):
+        self.set_header("Content-Type", "text/plain")
+        data = tornado.escape.json_decode(self.request.body)
+        print(data)
+        username = data["username"]
+        password =  data["password"]
+        snp_id = data["snp_id"]
+        if 'limit' not in data:
+            limit = "100000"
+        else:
+            limit = data["limit"]
+        query = "cross_join(project(GEUV3_GENOTYPE,allele_1,allele_2) as x, cast(filter(project(GEUV3_VARIANT,id),id = '"+snp_id+"'),<id:string NULL>[chromosome_id=0:31,1,0,start=0:256000000,8000,0,alternate_id=0:31,32,0]) as y,x.chromosome_id,y.chromosome_id,x.start,y.start,x.alternate_id,y.alternate_id)"
+        if int(limit)>0:
+            query = "limit("+query+","+limit+")"
+        myoutput = secure_iquery(username, password, query)
+        self.write(''.join(myoutput))
+
 class ListArraysHandler(tornado.web.RequestHandler):
     def get(self):
         self.write('''<!DOCTYPE html>
@@ -128,6 +147,7 @@ def make_app():
     return tornado.web.Application([
         (r"/", MainHandler),
         (r"/get_variants",GetVariantsHandler),
+        (r"/get_genotype_by_snp_id",GetGenotypeBySnpIdHandler),
         (r"/list_arrays",ListArraysHandler)
     ])
 

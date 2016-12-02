@@ -220,8 +220,8 @@ def make_app():
 if __name__ == "__main__":
     app = make_app()
     http_server = tornado.httpserver.HTTPServer(app, ssl_options={
-        "certfile": "/home/scidb/p4scratch/scidb-restful-tornado/server.crt",
-        "keyfile": "/home/scidb/p4scratch/scidb-restful-tornado/server.key",
+        "certfile": "/home/scidb/p4scratch/scidb-tornado/server.crt",
+        "keyfile": "/home/scidb/p4scratch/scidb-tornado/server.key",
     })
     http_server.listen(8888)
     tornado.ioloop.IOLoop.current().start()

@@ -118,6 +118,70 @@ class GetGenotypeBySnpIdHandler(tornado.web.RequestHandler):
         myoutput = secure_iquery(username, password, query)
         self.write(''.join(myoutput))
 
+class GetGenotypeBySampleAndPositionHandler(tornado.web.RequestHandler):
+
+    def post(self):
+        self.set_header("Content-Type", "text/plain")
+        data = tornado.escape.json_decode(self.request.body)
+        print(data)
+        username = data["username"]
+        password =  data["password"]
+        chromosome_nr = data["chromosome_nr"]
+        position_X = data["position_X"]
+        position_Y = data["position_Y"]
+        if 'limit' not in data:
+            limit = "100000"
+        else:
+            limit = data["limit"]
+        
+        list_of_n_individuals = "HG00096"
+        # 1
+        # buildSample = paste(
+        #   sprintf("build(<sample:string NOT NULL>[i=0:%d,512,0], ", length(list_of_n_individuals)-1),
+        #   paste("\'[(\\\'",  paste(list_of_n_individuals, collapse="\\\'),(\\\'"), "\\')]\', true)", sep="")
+        # )
+        buildSample = "build(<sample:string NOT NULL>[i=0:" + \
+                      str(len(list_of_n_individuals)) + \
+                      ",512,0], '[(\\'" +\
+                      list_of_n_individuals + \
+                      "\\')]', true)"
+                      
+        filterBySample = "cast(redimension(project(equi_join(apply(GEUV3_SAMPLE, sample_id,sample_id)," + \
+                         buildSample + \
+                         ''', 
+                         'left_names=sample', 
+                         'right_names=sample', 
+                         'left_outer=0', 
+                         'right_outer=0'),
+                         sample_id,sample),
+                         <sample:string NOT NULL> [sample_id=0:16383,512,0]),
+                         <sample:string>[sample_id=0:16383,512,0])'''
+        
+        # 2
+        filterByGenomicPos = "filter(between(project(GEUV3_VARIANT,end)," + \
+                             str(chromosome_nr) + "," + str(position_X) + \
+                             ",null," + str(chromosome_nr) + \
+                             ''',null,null),
+                             true  and end <= ''' + str(position_Y) + ")"
+        
+        # 3
+        formGuide = "cast(project(cross_join(" +\
+                    filterByGenomicPos + "," + filterBySample + '''),sample),
+                            <sample:string NULL>
+                            [chromosome_id=0:31,1,0,
+                            start=0:256000000,8000,0,
+                            alternate_id=0:31,32,0,
+                            sample_id=0:16383,512,0])'''
+        
+        
+        # 4 - join
+        joined = "join(GEUV3_GENOTYPE," + formGuide + ")"    
+        query = joined # "cross_join(project(GEUV3_GENOTYPE,allele_1,allele_2) as x, cast(filter(project(GEUV3_VARIANT,id),id = '"+snp_id+"'),<id:string NULL>[chromosome_id=0:31,1,0,start=0:256000000,8000,0,alternate_id=0:31,32,0]) as y,x.chromosome_id,y.chromosome_id,x.start,y.start,x.alternate_id,y.alternate_id)"
+        if int(limit)>0:
+            query = "limit("+query+","+limit+")"
+        myoutput = secure_iquery(username, password, query)
+        self.write(''.join(myoutput))
+
 class ListArraysHandler(tornado.web.RequestHandler):
     def get(self):
         self.write('''<!DOCTYPE html>
@@ -148,6 +212,7 @@ def make_app():
         (r"/", MainHandler),
         (r"/get_variants",GetVariantsHandler),
         (r"/get_genotype_by_snp_id",GetGenotypeBySnpIdHandler),
+        (r"/get_genotype_by_sample_and_position",GetGenotypeBySampleAndPositionHandler),
         (r"/list_arrays",ListArraysHandler)
     ])
 

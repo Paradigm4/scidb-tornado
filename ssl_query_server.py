@@ -134,18 +134,19 @@ class GetGenotypeBySampleAndPositionHandler(tornado.web.RequestHandler):
         else:
             limit = data["limit"]
         
-        list_of_n_individuals = "HG00096"
+        list_of_n_individuals = data["list_of_n_individuals"]
+        
+        mystring = "\\'), (\\'".join(str(i) for i in list_of_n_individuals)
+        mystring = "[(\\'" + mystring + "\\')]"
+        
+        # print(mystring)
         # 1
-        # buildSample = paste(
-        #   sprintf("build(<sample:string NOT NULL>[i=0:%d,512,0], ", length(list_of_n_individuals)-1),
-        #   paste("\'[(\\\'",  paste(list_of_n_individuals, collapse="\\\'),(\\\'"), "\\')]\', true)", sep="")
-        # )
         buildSample = "build(<sample:string NOT NULL>[i=0:" + \
                       str(len(list_of_n_individuals)) + \
-                      ",512,0], '[(\\'" +\
-                      list_of_n_individuals + \
-                      "\\')]', true)"
-                      
+                      ",512,0], '" +\
+                      mystring + \
+                      "', true)"
+
         filterBySample = "cast(redimension(project(equi_join(apply(GEUV3_SAMPLE, sample_id,sample_id)," + \
                          buildSample + \
                          ''', 

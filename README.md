@@ -63,7 +63,7 @@ Query 2 of genomics benchmark:
  - `${list_of_n_individuals}`=list containing n individual ids (e.g. [HG01572, HG01577, HG01578])
 
 ```
-curl -k -X POST -H "Content-Type: application/json" -H "Cache-Control: no-cache" -H "Postman-Token: a31479c6-93c8-87d7-8838-cd8bcfdc6f03" -d '{
+curl -k -X POST -H "Content-Type: application/json" -d '{
     "username":"root",
     "password":"Paradigm4",
     "chromosome_nr": "9",
@@ -71,7 +71,8 @@ curl -k -X POST -H "Content-Type: application/json" -H "Cache-Control: no-cache"
     "position_Y": "61334",
     "list_of_n_individuals": ["HG00096", "HG00100", "HG00101", "HG00102"],
     "limit": "10000"
-}' "https://chandra1.eastus.cloudapp.azure.com:8888/get_genotype_by_sample_and_position"```
+}' "https://chandra1.eastus.cloudapp.azure.com:8888/get_genotype_by_sample_and_position"
+```
 
 Output:
 
@@ -80,6 +81,7 @@ false	false	true	0|0:-0.01,-1.66,-5.00:0.000:.:.	61334	HG00096
 false	false	true	0|0:-0.06,-0.88,-5.00:0.000:.:.	61334	HG00100
 false	false	true	0|0:-0.02,-1.27,-5.00:0.000:.:.	61334	HG00101
 false	false	true	0|0:-0.00,-2.06,-5.00:0.000:.:.	61334	HG00102```
+```
 
 ## Example (`/`):
 
@@ -92,4 +94,3 @@ curl -k -H "Content-Type: application/json" --data '{"username":"root","password
 The `server.crt` and `server.key` are SSL things you have to generate with a weirdo set of commands - you can regenerate your own if you like. Included just for an example. Note the app sets the paths to these filenames.
 
 See https://devcenter.heroku.com/articles/ssl-certificate-self
-

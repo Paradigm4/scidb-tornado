@@ -207,6 +207,14 @@ Please select the genomic region
         myoutput = secure_iquery(username, password, "project(list(), uaid, name)")
         self.write(''.join(myoutput))
 
+class SwaggerTestHandler(tornado.web.RequestHandler):
+
+    def post(self):
+        print(self.request.body)
+        self.set_header("Content-Type", "text/plain")
+        # data = tornado.escape.json_decode(self.request.body)
+        # print(data)
+        self.write('Hellow')
 
 def make_app():
     return tornado.web.Application([
@@ -214,6 +222,7 @@ def make_app():
         (r"/get_variants",GetVariantsHandler),
         (r"/get_genotype_by_snp_id",GetGenotypeBySnpIdHandler),
         (r"/get_genotype_by_sample_and_position",GetGenotypeBySampleAndPositionHandler),
+        (r"/test_swagger",SwaggerTestHandler),
         (r"/list_arrays",ListArraysHandler)
     ])
 

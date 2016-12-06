@@ -1,14 +1,25 @@
-# scidb-restful-tornado
-SciDB RESTful api via tornado
+# scidb-tornado
 
-Tornado seems to be like Mongoose for Python. So this project is like an exploratory project for finding Shim alternatives. 
-
-Instead of a query language, we want to make a REST API like
+## Get started
+Start the server with
 
 ```
-/get_variants
-/insert_variant_file
-/get_samples
+$ python ssl_query_server.py
+```
+
+# Documentation
+
+SciDB variant warehouse RESTful api via Python tornado
+
+The following API are exposed:
+
+```
+/list_arrays    #  <-- just the list of the arrays
+/get_genotype_by_snp_id                 #  Find the genotypes of `${Reference_SNP}` in all individuals    
+/get_genotype_by_sample_and_position    #  <-- returns a set of variants from 
+                                        #selected locations and selected samples
+/               # <-- run any query, using additional argument "iquerytxt":"<QUERY>"...
+/test_swagger   # <-- (work in progress) to test swagger docs
 ```
 
 We wrote a very basic demo. One option was to extend shim, but we opted for this Python Tornado thing (extremely easy to get going).
@@ -19,40 +30,56 @@ We wrote a very basic demo. One option was to extend shim, but we opted for this
 
 The SSL is important so that username and password are passed encrypted over the network.
 
-So this has 3 entry points:
-
-```
-/list_arrays    #  <-- just the list of the arrays
-/get_variants   #  <-- returns a set of variants from selected locations
-/               # <-- run any query, using additional argument "iquerytxt":"<QUERY>"...
-```
-
 ## Example (`list_arrays`):
 
 ```
-curl -k -H "Content-Type: application/json" --data '{"username":"root","password":"Paradigm4"}'  https://chandra1.eastus.cloudapp.azure.com:8888/list_arrays
+curl -k -X POST -H "Content-Type: application/json" -d '{
+	"username":"root",
+	"password":"Paradigm4"
+}' "https://chandra1.eastus.cloudapp.azure.com:8888/list_arrays"
 ```
+## Example (`get_genotype_by_snp_id`):
 
-## Example (`get_variants`):
+Find the genotypes of `${Reference_SNP}` in all individuals    
 
 ```
-curl -k -H "Content-Type: application/json" --data '{"username":"root","password":"Paradigm4","chromosome_id":"16","start":"123456","end":"234567","limit":"10"}'  https://chandra1.eastus.cloudapp.azure.com:8888/get_variants
+curl -k -X POST -H "Content-Type: application/json" -d '{
+	"username":"root",
+	"password":"Paradigm4",
+	"snp_id": "snp_10_100155642"
+}' "https://chandra1.eastus.cloudapp.azure.com:8888/get_genotype_by_snp_id"
 ```
+## Example (`get_genotype_by_sample_and_position`):
+
+Query 2 of genomics benchmark:
+ 
+ - Find genotypes of all mutations in `${chromosome_nr}` between chromosomal coordinates
+     `${position_X}` and `${position_Y}` in individuals `${list_of_n_individuals}`
+
+ The elements in the queries that can vary, are reported as variables. They are:
+
+ - `${chromosome_nr}`=chromosome number
+ - `${position_X},${position_Y}`=start/end positions as integers
+ - `${list_of_n_individuals}`=list containing n individual ids (e.g. [HG01572, HG01577, HG01578])
+
+```
+curl -k -X POST -H "Content-Type: application/json" -H "Cache-Control: no-cache" -H "Postman-Token: a31479c6-93c8-87d7-8838-cd8bcfdc6f03" -d '{
+    "username":"root",
+    "password":"Paradigm4",
+    "chromosome_nr": "9",
+    "position_X": "61334",
+    "position_Y": "61334",
+    "list_of_n_individuals": ["HG00096", "HG00100", "HG00101", "HG00102"],
+    "limit": "10000"
+}' "https://chandra1.eastus.cloudapp.azure.com:8888/get_genotype_by_sample_and_position"```
 
 Output:
 
 ```
-7    73841    A    <CN2>    DUP_gs_CNV_7_73841_134997    AC=7;AF=0.00139776;AN=5008;CS=DUP_gs;END=134997;NS=2504;SVTYPE=DUP
-7    78321    A    <CN2>    DUP_uwash_chr7_78320_231876    AC=2;AF=0.000399361;AN=5008;CS=DUP_uwash;END=231876;NS=2504;SVTYPE=DUP
-7    109065    G    <CN2>    DUP_uwash_chr7_109064_180542    AC=6;AF=0.00119808;AN=5008;CS=DUP_uwash;END=180542;NS=2504;SVTYPE=DUP
-7    116566    G    <CN0>    UW_VH_15505    AC=1;AF=0.000199681;AN=5008;CIEND=0,175;CIPOS=-171,0;CS=DEL_union;END=124516;NS=2504;SVLEN=8123;SVTYPE=DEL
-7    123456    T    G    rs189684716    AC=1;AF=0.000199681;AN=5008;NS=2504
-7    123470    A    G    rs4458821    AC=1446;AF=0.288738;AN=5008;NS=2504
-7    123481    C    G    rs114417607    AC=31;AF=0.0061901;AN=5008;NS=2504
-7    123485    C    T    .    AC=1;AF=0.000199681;AN=5008;NS=2504
-7    123494    C    T    rs148957509    AC=16;AF=0.00319489;AN=5008;NS=2504
-7    123495    G    A    .    AC=2;AF=0.000399361;AN=5008;NS=2504
-```
+false	false	true	0|0:-0.01,-1.66,-5.00:0.000:.:.	61334	HG00096
+false	false	true	0|0:-0.06,-0.88,-5.00:0.000:.:.	61334	HG00100
+false	false	true	0|0:-0.02,-1.27,-5.00:0.000:.:.	61334	HG00101
+false	false	true	0|0:-0.00,-2.06,-5.00:0.000:.:.	61334	HG00102```
 
 ## Example (`/`):
 
@@ -60,11 +87,9 @@ Output:
 curl -k -H "Content-Type: application/json" --data '{"username":"root","password":"Paradigm4", "iquerytxt":"list()"}'  https://chandra1.eastus.cloudapp.azure.com:8888/
 ```
 
+# Notes
+
 The `server.crt` and `server.key` are SSL things you have to generate with a weirdo set of commands - you can regenerate your own if you like. Included just for an example. Note the app sets the paths to these filenames.
+
 See https://devcenter.heroku.com/articles/ssl-certificate-self
 
-Start the server with
-
-```
-$ python ssl_query_server.py
-```
